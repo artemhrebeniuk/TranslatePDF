@@ -137,9 +137,9 @@ MEDICAL_UK_EN = {
     "Інтерпретація результату має здійснюватися з урахуванням додаткових функціональних показників та клінічної оцінки лікаря.": "Result interpretation must be performed considering additional functional parameters and clinical assessment by a physician.",
     "Феритин": "Ferritin",
     "Фолієва кислота": "Folic Acid",
-    "Вітамін В12 (ціанокобаламін, vitamin": "Vitamin B12 (cyanocobalamin, vitamin",
-    "B12, cyanocobalamin), біотин-": "B12, cyanocobalamin), biotin-",
-    "незалежний, кількісний": "independent, quantitative",
+    "Вітамін В12 (ціанокобаламін, vitamin": "Vitamin B12 (cyanocobalamin),",
+    "B12, cyanocobalamin), біотин-": "biotin-independent,",
+    "незалежний, кількісний": "quantitative",
     "Увага! Оцінка дефіциту вітаміну B12 не повинна базуватися виключно на результаті одного лабораторного дослідження.": "Note: Assessment of Vitamin B12 deficiency should not rely solely on a single laboratory test result.",
     "Трансферин": "Transferrin",
     "Залізо": "Iron",
@@ -178,26 +178,39 @@ MEDICAL_UK_EN = {
     "Мієлоцити (MС)": "Myelocytes (MC)",
     "Віроцити (VIR)": "Virocytes (VIR)",
     "Швидкість осідання еритроцитів (ESR)": "Erythrocyte Sedimentation Rate (ESR)",
+
+    # Reference Intervals (Concise Clinical Standards)
+    "0-15 д. 39.84 - 539.85": "0-15 d. 39.84 - 539.85",
+    "15 д.-6 м. 15.25 - 374.58": "15 d.-6 mo. 15.25 - 374.58",
+    "6 м.-1 рік 13.32 - 191.89": "6 mo.-1 yr 13.32 - 191.89",
+    "1-16 років 10.29 - 55.84": "1-16 yrs 10.29 - 55.84",
+    "16-19 років 18.67 - 102.06": "16-19 yrs 18.67 - 102.06",
+    "Від 19 років 23.9-336.2": "From 19 yrs 23.9-336.2",
+    "0 - 14 років >12,2": "0 - 14 yrs >12.2",
+    "14 - 19 років >8,9": "14 - 19 yrs >8.9",
+    "Від 19 років 3,1-19,9": "From 19 yrs 3.1-19.9",
+    "0 - 1 рік >159.28": "0 - 1 yr >159.28",
+    "1 - 2 роки >267.05": "1 - 2 yrs >267.05",
+    "2 - 8 років 257.83 - 1012.91": "2 - 8 yrs 257.83 - 1012.91",
+    "8 - 14 років 201.39 - 1046.25": "8 - 14 yrs 201.39 - 1046.25",
+    "14 - 19 років 179.38 - 719.46": "14 - 19 yrs 179.38 - 719.46",
     
     # Page 3: 25-OH Vitamin D & Doctor Signature
     "25-гідроксивітамін Д": "25-Hydroxyvitamin D",
     "Відповідальна особа": "Responsible Person",
     "Завідувач Лабораторії клінічної біохімії Поливода А.Я.": "Head of Clinical Biochemistry Lab Polyvoda A.Y.",
     "<50 - дефіцит вітаміну D;": "<50 - Vitamin D deficiency;",
-    ">=50 - <75 - недостатність": ">=50 - <75 - Vitamin D",
-    "вітаміну D;": "insufficiency;",
-    "75-125 - достатній рівень": "75-125 - Sufficient",
-    "вітаміну D;": "Vitamin D level;",
-    ">125-150 - безпечний, але не": ">125-150 - Safe but non-",
-    "цільовий рівень вітаміну D;": "target Vitamin D level;",
+    ">=50 - <75 - недостатність": ">=50 - <75 - Insufficiency of",
+    "вітаміну D;": "Vitamin D;",
+    "75-125 - достатній рівень": "75-125 - Optimal level of",
+    ">125-150 - безпечний, але не": ">125-150 - Safe non-target",
+    "цільовий рівень вітаміну D;": "level of Vitamin D;",
     ">150-250 - зона": ">150-250 - Zone of",
     "невизначеності з": "uncertainty with",
     "потенційними перевагами чи": "potential benefits or",
     "ризиками;": "risks;",
-    ">250 - надлишок/зона": ">250 - Vitamin D excess/",
+    ">250 - надлишок/зона": ">250 - Vitamin D excess /",
     "токсичності вітаміну D.": "toxicity zone.",
-    "токсичності вітаміну": "toxicity zone of",
-    "D.": "Vitamin D.",
     "Діагностика, профілактика та": "Diagnosis, prevention and",
     "лікування дефіциту вітаміну": "treatment of Vitamin D",
     "D у дорослих: Kонсенсус": "deficiency: Ukrainian",
@@ -500,6 +513,20 @@ class PDFTranslator:
                     r_client = fitz.Rect(9.0, 646.0, 22.0, 725.0)
                     page.draw_rect(r_client, color=(1, 1, 1), fill=(1, 1, 1))
                     page.insert_text((18.0, 718.0), "Dear Client!", fontname="app_reg", fontfile=self.font_reg, fontsize=8.5, color=(0.708, 0.036, 0.218), rotate=90)
+
+                # Clear & translate header address if vector paths exist
+                drawings_addr = [d for d in page.get_drawings() if 65 < d["rect"].y0 < 78 and 150 < d["rect"].x0 < 340]
+                if len(drawings_addr) > 15:
+                    addr_rect = fitz.Rect(149.0, 66.0, 345.0, 77.5)
+                    page.draw_rect(addr_rect, color=(1, 1, 1), fill=(1, 1, 1))
+                    page.insert_text(
+                        (150.5, 74.2),
+                        "Ukraine, 01103, Kyiv, 6a Pidvysotskoho St.",
+                        fontname="app_reg",
+                        fontfile=self.font_reg,
+                        fontsize=7.2,
+                        color=(0.0, 0.335, 0.590)
+                    )
 
             items_to_replace = []
             

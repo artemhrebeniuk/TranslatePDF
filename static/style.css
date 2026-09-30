@@ -816,3 +816,234 @@ body {
   color: #94a3b8;
   padding: 10px 0;
 }
+
+/* Default label visibility for view tabs */
+.tab-label-short {
+  display: none;
+}
+
+/* ==========================================================================
+   Responsive & Mobile Experience (Nordic Slate & Forest Emerald)
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  .app-wrapper {
+    padding: 76px 16px 32px;
+    gap: 14px;
+  }
+
+  .viewer-floating-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-wrapper {
+    padding: 72px 10px 24px;
+    gap: 12px;
+  }
+
+  /* Fixed Floating Pill Header (Mobile) */
+  .floating-header-container {
+    top: 8px;
+    padding: 0 10px;
+  }
+
+  .floating-header {
+    height: 48px;
+    padding: 0 12px;
+    border-radius: 14px;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brand-mark svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .brand-title {
+    font-size: 1.02rem;
+  }
+
+  /* Hero Toolbar (Mobile) */
+  .hero-toolbar {
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pill-group {
+    flex-shrink: 0;
+  }
+
+  .pill-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .toolbar-file-drop {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    font-size: 0.76rem;
+    overflow: hidden;
+  }
+
+  #currentFileName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+  }
+
+  .toolbar-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-brand-primary,
+  .btn-brand-download {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 8px;
+    font-size: 0.80rem;
+  }
+
+  /* Viewer Floating Toolbar (Mobile) */
+  .viewer-floating-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .view-mode-tabs {
+    width: 100%;
+    display: flex;
+    gap: 4px;
+    background: var(--surface-muted);
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 7px 6px;
+    font-size: 0.76rem;
+    border-radius: 7px;
+  }
+
+  .tab-label-full {
+    display: none;
+  }
+
+  .tab-label-short {
+    display: inline;
+  }
+
+  /* Secondary controls row on mobile */
+  .viewer-floating-toolbar > .viewer-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .action-btn-sm {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    min-height: 34px;
+  }
+
+  /* Dual Panes Grid (Full-width single column on mobile) */
+  .dual-panes-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    min-height: auto;
+  }
+
+  .pane-card {
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .pane-header {
+    padding: 8px 12px;
+  }
+
+  .doc-name {
+    font-size: 0.82rem;
+  }
+
+  .doc-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  .page-arrow {
+    width: 28px;
+    height: 28px;
+    font-size: 1.1rem;
+  }
+
+  .page-count-text {
+    font-size: 0.75rem;
+  }
+
+  .canvas-viewport {
+    height: 56vh;
+    min-height: 400px;
+    max-height: 600px;
+    padding: 16px 8px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .document-preview-img {
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  }
+}
+
+@media (max-width: 480px) {
+  .author-name {
+    display: none;
+  }
+
+  .author-chip {
+    padding: 8px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .canvas-viewport {
+    height: 50vh;
+    min-height: 360px;
+  }
+}
+
