@@ -5,15 +5,19 @@ import shutil
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from engine import pdf_engine, PDFTranslator
 
-app = Flask(__name__, static_folder="static", static_url_path="")
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STORAGE_DIR = os.path.join(BASE_DIR, "storage")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+if os.environ.get("VERCEL"):
+    STORAGE_DIR = "/tmp/storage"
+else:
+    STORAGE_DIR = os.path.join(BASE_DIR, "storage")
 PREVIEWS_DIR = os.path.join(STORAGE_DIR, "previews")
 SAMPLES_DIR = os.path.join(BASE_DIR, "samples")
 
 os.makedirs(STORAGE_DIR, exist_ok=True)
 os.makedirs(PREVIEWS_DIR, exist_ok=True)
+
+app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 
 # In-memory document metadata store
 DOCUMENTS: dict = {}

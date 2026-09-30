@@ -67,13 +67,14 @@ def call_together_ai_batch(texts: List[str], source_lang="uk", target_lang="en")
         
     return {}
 
-# System Font Paths
+# Font Configuration (Bundled project fonts for Vercel/Linux compatibility with macOS fallback)
+FONTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 SYSTEM_FONTS = {
-    "regular": "/System/Library/Fonts/Supplemental/Arial.ttf",
-    "bold": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-    "italic": "/System/Library/Fonts/Supplemental/Arial Italic.ttf",
-    "bold_italic": "/System/Library/Fonts/Supplemental/Arial Bold Italic.ttf",
-    "unicode": "/Library/Fonts/Arial Unicode.ttf" if os.path.exists("/Library/Fonts/Arial Unicode.ttf") else "/System/Library/Fonts/Supplemental/Arial.ttf"
+    "regular": os.path.join(FONTS_DIR, "Arial.ttf") if os.path.exists(os.path.join(FONTS_DIR, "Arial.ttf")) else "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "bold": os.path.join(FONTS_DIR, "Arial-Bold.ttf") if os.path.exists(os.path.join(FONTS_DIR, "Arial-Bold.ttf")) else "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "italic": os.path.join(FONTS_DIR, "Arial-Italic.ttf") if os.path.exists(os.path.join(FONTS_DIR, "Arial-Italic.ttf")) else "/System/Library/Fonts/Supplemental/Arial Italic.ttf",
+    "bold_italic": os.path.join(FONTS_DIR, "Arial-Bold.ttf") if os.path.exists(os.path.join(FONTS_DIR, "Arial-Bold.ttf")) else "/System/Library/Fonts/Supplemental/Arial Bold Italic.ttf",
+    "unicode": os.path.join(FONTS_DIR, "Arial.ttf") if os.path.exists(os.path.join(FONTS_DIR, "Arial.ttf")) else "/System/Library/Fonts/Supplemental/Arial.ttf"
 }
 
 # Medical Dictionary (Ukrainian -> English)
@@ -359,10 +360,10 @@ def translate_string(text: str, source_lang="uk", target_lang="en", mode="medica
 
     return cleaned
 
-def get_clean_background_color(pix: fitz.Pixmap, rect: fitz.Rect) -> Tuple[float, float, float]:
+def get_clean_background_color(pix: fitz.Pixmap, rect: fitz.Rect, page_idx: int = 0) -> Tuple[float, float, float]:
     """Sample background pixels above/below bounding box to avoid letter stroke bleed."""
-    # Special case: Page 3 right Vitamin D card has soft blue background
-    if rect.x0 > 450 and 238 < rect.y0 < 402:
+    # Special case: ONLY Page 3 (page_idx == 2) right Vitamin D decision card has soft blue background
+    if page_idx == 2 and rect.x0 > 450 and 238 < rect.y0 < 402:
         return (0.804, 0.914, 0.969)
         
     if rect.y0 > 4:
@@ -591,7 +592,7 @@ class PDFTranslator:
             # 1. Add non-destructive redactions for translated lines
             for item in items_to_replace:
                 if item["original"] != item["translated"]:
-                    bg_col = get_clean_background_color(pix, item["bbox"])
+                    bg_col = get_clean_background_color(pix, item["bbox"], page_idx=page_idx)
                     pad = fitz.Rect(
                         item["bbox"].x0 - 0.5,
                         item["bbox"].y0 - 0.5,
