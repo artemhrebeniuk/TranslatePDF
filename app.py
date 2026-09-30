@@ -19,6 +19,26 @@ os.makedirs(PREVIEWS_DIR, exist_ok=True)
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 
+class VercelWSGIMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        query = environ.get("QUERY_STRING", "")
+        if "__route__=" in query:
+            try:
+                import urllib.parse
+                params = urllib.parse.parse_qs(query, keep_blank_values=True)
+                if "__route__" in params:
+                    environ["PATH_INFO"] = params.pop("__route__")[0]
+                    environ["QUERY_STRING"] = urllib.parse.urlencode(params, doseq=True)
+            except Exception:
+                pass
+
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelWSGIMiddleware(app.wsgi_app)
+
 # In-memory document metadata store
 DOCUMENTS: dict = {}
 
@@ -50,13 +70,7 @@ def index():
 @app.route("/api/")
 @app.route("/api/index")
 def api_root():
-    return jsonify({
-        "status": "active",
-        "service": "TranslatePDF Engine API",
-        "path": request.path,
-        "args": dict(request.args),
-        "query_string": request.environ.get("QUERY_STRING")
-    })
+    return jsonify({"status": "active", "service": "TranslatePDF Engine API"})
 
 @app.route("/api/samples", methods=["GET"])
 def list_samples():
