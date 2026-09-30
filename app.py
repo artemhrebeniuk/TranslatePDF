@@ -50,7 +50,13 @@ def index():
 @app.route("/api/")
 @app.route("/api/index")
 def api_root():
-    return jsonify({"status": "active", "service": "TranslatePDF Engine API"})
+    return jsonify({
+        "status": "active",
+        "service": "TranslatePDF Engine API",
+        "path": request.path,
+        "args": dict(request.args),
+        "query_string": request.environ.get("QUERY_STRING")
+    })
 
 @app.route("/api/samples", methods=["GET"])
 def list_samples():
