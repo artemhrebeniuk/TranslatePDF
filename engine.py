@@ -361,36 +361,51 @@ def translate_string(text: str, source_lang="uk", target_lang="en", mode="medica
     return cleaned
 
 def get_clean_background_color(pix: fitz.Pixmap, rect: fitz.Rect, page_idx: int = 0) -> Tuple[float, float, float]:
-    """Sample background pixels above/below bounding box to avoid letter stroke bleed."""
+    """Sample background pixels along the horizontal center of the line to match table rows perfectly."""
     # Special case: ONLY Page 3 (page_idx == 2) right Vitamin D decision card has soft blue background
     if page_idx == 2 and rect.x0 > 450 and 238 < rect.y0 < 402:
         return (0.804, 0.914, 0.969)
         
-    if rect.y0 > 4:
-        y_sample = int(rect.y0 - 2)
-    else:
-        y_sample = int(rect.y1 + 2)
-        
-    y_sample = max(1, min(pix.height - 2, y_sample))
+    cy = (rect.y0 + rect.y1) / 2
+    w, h = pix.width, pix.height
     
-    xs = [int(rect.x0 + 3), int(rect.x0 + rect.width * 0.5), int(max(rect.x0 + 3, rect.x1 - 3))]
-    candidates = []
-    for px in xs:
-        if 0 <= px < pix.width and 0 <= y_sample < pix.height:
-            c = pix.pixel(px, y_sample)
-            if (c[0] + c[1] + c[2]) > 250:
-                candidates.append(c)
-                
-    if not candidates:
-        return (1.0, 1.0, 1.0)
+    # Primary candidates: left and right of the text at the vertical center of this exact line
+    primary_samples = [
+        (rect.x0 - 3, cy),
+        (rect.x1 + 3, cy),
+        (rect.x0 - 6, cy),
+        (rect.x1 + 6, cy),
+    ]
     
-    # Pick candidate with max luminance
-    candidates.sort(key=lambda c: (c[0] + c[1] + c[2]), reverse=True)
-    best = candidates[0]
-    r, g, b = best[0] / 255.0, best[1] / 255.0, best[2] / 255.0
-    if r > 0.97 and g > 0.97 and b > 0.97:
-        return (1.0, 1.0, 1.0)
-    return (r, g, b)
+    for px, py in primary_samples:
+        ix = min(w - 1, max(0, int(px)))
+        iy = min(h - 1, max(0, int(py)))
+        try:
+            rgb = pix.pixel(ix, iy)[:3]
+            lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+            if lum > 190: # Medical background is light
+                if all(c > 248 for c in rgb):
+                    return (1.0, 1.0, 1.0)
+                return (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
+        except Exception:
+            pass
+            
+    # Secondary: above/below if horizontal was clipped or bordered
+    cx = (rect.x0 + rect.x1) / 2
+    for px, py in [(cx, rect.y0 - 1), (cx, rect.y1 + 1)]:
+        ix = min(w - 1, max(0, int(px)))
+        iy = min(h - 1, max(0, int(py)))
+        try:
+            rgb = pix.pixel(ix, iy)[:3]
+            lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+            if lum > 190:
+                if all(c > 248 for c in rgb):
+                    return (1.0, 1.0, 1.0)
+                return (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
+        except Exception:
+            pass
+            
+    return (1.0, 1.0, 1.0)
 
 class PDFTranslator:
     def __init__(self):
