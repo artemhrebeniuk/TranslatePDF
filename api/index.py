@@ -1,5 +1,6 @@
 import sys
 import os
+import urllib.parse
 
 # Add root directory to python search path
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -13,18 +14,15 @@ class VercelWSGIMiddleware:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        path = environ.get("PATH_INFO", "")
-        # If Vercel rewrote PATH_INFO to internal function path, recover original requested path
-        if path in ("/api/index", "/api/index.py", "/api", ""):
-            orig = (
-                environ.get("HTTP_X_FORWARDED_URI")
-                or environ.get("HTTP_X_MATCHED_PATH")
-                or environ.get("RAW_URI")
-            )
-            if orig:
-                clean_path = orig.split("?")[0]
-                if clean_path and clean_path not in ("/api/index", "/api/index.py"):
-                    environ["PATH_INFO"] = clean_path
+        query = environ.get("QUERY_STRING", "")
+        if "__route__=" in query:
+            try:
+                params = urllib.parse.parse_qs(query, keep_blank_values=True)
+                if "__route__" in params:
+                    environ["PATH_INFO"] = params.pop("__route__")[0]
+                    environ["QUERY_STRING"] = urllib.parse.urlencode(params, doseq=True)
+            except Exception:
+                pass
 
         return self.wsgi_app(environ, start_response)
 
