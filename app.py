@@ -50,7 +50,16 @@ def index():
 @app.route("/api/")
 @app.route("/api/index")
 def api_root():
-    return jsonify({"status": "active", "service": "TranslatePDF Engine API"})
+    return jsonify({
+        "status": "active",
+        "service": "TranslatePDF Engine API",
+        "path_info": request.environ.get("PATH_INFO"),
+        "raw_uri": request.environ.get("RAW_URI"),
+        "x_matched_path": request.headers.get("x-matched-path"),
+        "x_forwarded_uri": request.headers.get("x-forwarded-uri"),
+        "x_vercel_id": request.headers.get("x-vercel-id"),
+        "headers": {k: v for k, v in request.headers.items() if "auth" not in k.lower()}
+    })
 
 @app.route("/api/samples", methods=["GET"])
 def list_samples():
