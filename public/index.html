@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReviseTranslate • Precision Medical PDF Translation Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;600;700;800&family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating Pill Header (Nordic Slate & Forest Emerald) -->
+  <div class="floating-header-container">
+    <header class="floating-header">
+      <!-- Left: Brand Mark & Identity -->
+      <div class="brand-section">
+        <div class="brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="m9 15 2 2 4-4"></path>
+          </svg>
+        </div>
+        <a href="/" class="brand-title">
+          Revise<span>Translate</span>
+        </a>
+      </div>
+
+      <!-- Right: Author Attribution Chip -->
+      <div class="header-right-actions">
+        <a href="https://github.com/artemhrebeniuk" target="_blank" rel="noopener noreferrer" class="author-chip tactile-btn" title="Author Profile: Artem Hrebeniuk">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span class="author-name">artemhrebeniuk</span>
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Streamlined Clinical Workflow Controls & File Drop -->
+    <section class="case-study-card hero-toolbar">
+      <div class="toolbar-left">
+        <!-- Medical Translation Direction (Fixed Dedicated UKR ➔ EN Badge) -->
+        <div class="pill-group">
+          <div class="pill-btn active" style="cursor: default;" title="Dedicated Medical Translation Direction">
+            <span class="lang-code">UKR</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <span class="lang-code">EN</span>
+          </div>
+        </div>
+
+        <!-- Single Dropzone File Affordance -->
+        <label for="pdfFileInput" class="toolbar-file-drop tactile-btn" id="fileDropLabel">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span id="currentFileName">Yeshchenko_MO_063758776_UKR_0.pdf (3 pages)</span>
+          <input type="file" id="pdfFileInput" accept="application/pdf" style="display: none;">
+        </label>
+      </div>
+
+      <div class="toolbar-right">
+        <!-- Primary Action Trigger -->
+        <button id="btnTranslate" class="btn-brand-primary tactile-btn" title="Run non-destructive medical translation">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="translateBtnText">Translate Document</span>
+        </button>
+
+        <!-- Download Action -->
+        <button id="btnDownload" class="btn-brand-download tactile-btn" title="Download translated PDF" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download PDF</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Dual-Source Synchronized Spatial Inspector -->
+    <section class="viewer-workspace">
+      <!-- Toolbar with View Mode, Synchronous Rotation & Zoom -->
+      <div class="viewer-floating-toolbar">
+        <!-- View Mode Switcher -->
+        <div class="view-mode-tabs" id="viewModeTabs">
+          <button class="mode-tab active tactile-btn" data-view="split">
+            <span class="tab-label-full">Split View</span>
+            <span class="tab-label-short">Split</span>
+          </button>
+          <button class="mode-tab tactile-btn" data-view="orig">
+            <span class="tab-label-full">Doc A (Original)</span>
+            <span class="tab-label-short">Original</span>
+          </button>
+          <button class="mode-tab tactile-btn" data-view="rev">
+            <span class="tab-label-full">Doc B (Translated)</span>
+            <span class="tab-label-short">Translated</span>
+          </button>
+        </div>
+
+        <!-- Center: Synchronous Parallel Rotation Controls (0°, 90°, 180°, 270°) -->
+        <div class="viewer-actions">
+          <button id="btnRotateCw" class="action-btn-sm tactile-btn" title="Rotate documents 90° clockwise in parallel to inspect vertical margin text">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>Rotate 90°</span>
+            <span id="rotationBadge" class="rotation-badge">0°</span>
+          </button>
+          <button id="btnRotateReset" class="action-btn-sm tactile-btn" title="Reset rotation to 0°">
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="viewer-actions">
+          <button id="btnZoomOut" class="action-btn-sm tactile-btn" title="Zoom Out">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <span id="zoomLevelDisplay" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; min-width: 48px; text-align: center;">100%</span>
+          <button id="btnZoomIn" class="action-btn-sm tactile-btn" title="Zoom In">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <button id="btnFitWidth" class="action-btn-sm tactile-btn" title="Fit to Width">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            <span>Fit Width</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dual Split Panes (Side-by-Side Comparison) -->
+      <div class="dual-panes-grid" id="dualPanesGrid">
+        <!-- PANE A: Original Baseline Reference -->
+        <div class="pane-card pane-a" id="paneOrig">
+          <div class="pane-header">
+            <div class="pane-title-group">
+              <span class="doc-dot dot-a"></span>
+              <span class="doc-name" id="origDocTitle">Original Document</span>
+              <span class="doc-badge badge-doc-a" id="origBadge">Doc A • UKR</span>
+            </div>
+
+            <!-- Page Pagination Controls -->
+            <div class="pagination-group">
+              <button id="btnOrigPrev" class="page-arrow tactile-btn" title="Previous Page">‹</button>
+              <span id="origPageIndicator" class="page-count-text">Page 1 of 3</span>
+              <button id="btnOrigNext" class="page-arrow tactile-btn" title="Next Page">›</button>
+            </div>
+          </div>
+
+          <div class="canvas-viewport" id="origViewport">
+            <img id="origImg" class="document-preview-img" alt="Doc A Original Page" style="display: none;">
+            <div id="origEmpty" class="viewport-empty">
+              <span>Loading document pages...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE B: Candidate Translated Document -->
+        <div class="pane-card pane-b" id="paneTrans">
+          <div class="pane-header">
+            <div class="pane-title-group">
+              <span class="doc-dot dot-b"></span>
+              <span class="doc-name" id="transDocTitle">Translated Document</span>
+              <span class="doc-badge badge-doc-b" id="transBadge">Doc B • EN</span>
+            </div>
+
+            <!-- Page Pagination Controls -->
+            <div class="pagination-group">
+              <button id="btnTransPrev" class="page-arrow tactile-btn" title="Previous Page">‹</button>
+              <span id="transPageIndicator" class="page-count-text">Page 1 of 3</span>
+              <button id="btnTransNext" class="page-arrow tactile-btn" title="Next Page">›</button>
+            </div>
+          </div>
+
+          <div class="canvas-viewport" id="transViewport">
+            <img id="transImg" class="document-preview-img" alt="Doc B Translated Page" style="display: none;">
+            <div id="transEmpty" class="viewport-empty">
+              <span>Click "Translate Document" to generate non-destructive translation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

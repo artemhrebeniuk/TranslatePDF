@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 from engine import pdf_engine, PDFTranslator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+STATIC_DIR = os.path.join(BASE_DIR, "public") if os.path.exists(os.path.join(BASE_DIR, "public")) else os.path.join(BASE_DIR, "static")
 if os.environ.get("VERCEL"):
     STORAGE_DIR = "/tmp/storage"
 else:
@@ -38,7 +38,19 @@ def get_doc_paths(doc_id: str):
 
 @app.route("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html")
+    if os.path.exists(os.path.join(app.static_folder, "index.html")):
+        return send_from_directory(app.static_folder, "index.html")
+    # Fallback to static if public wasn't used
+    alt_static = os.path.join(BASE_DIR, "static")
+    if os.path.exists(os.path.join(alt_static, "index.html")):
+        return send_from_directory(alt_static, "index.html")
+    return "<h1>TranslatePDF Studio</h1>", 200
+
+@app.route("/api")
+@app.route("/api/")
+@app.route("/api/index")
+def api_root():
+    return jsonify({"status": "active", "service": "TranslatePDF Engine API"})
 
 @app.route("/api/samples", methods=["GET"])
 def list_samples():
