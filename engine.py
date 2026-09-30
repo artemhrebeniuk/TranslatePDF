@@ -4,6 +4,7 @@ import os
 import math
 import json
 import urllib.request
+from collections import Counter
 from typing import Dict, List, Any, Tuple, Optional
 
 # Together AI Configuration (Meta Llama 3.3 70B Instruct Turbo for autonomous clinical translation)
@@ -361,51 +362,52 @@ def translate_string(text: str, source_lang="uk", target_lang="en", mode="medica
     return cleaned
 
 def get_clean_background_color(pix: fitz.Pixmap, rect: fitz.Rect, page_idx: int = 0) -> Tuple[float, float, float]:
-    """Sample background pixels along the horizontal center of the line to match table rows perfectly."""
-    # Special case: ONLY Page 3 (page_idx == 2) right Vitamin D decision card has soft blue background
-    if page_idx == 2 and rect.x0 > 450 and 238 < rect.y0 < 402:
-        return (0.804, 0.914, 0.969)
-        
-    cy = (rect.y0 + rect.y1) / 2
+    """
+    Determine the true background color of a line of text by analyzing the dominant light color
+    inside and immediately around its bounding box.
+    This guarantees that text inside soft blue/tinted table rows gets the exact row tint,
+    while text on white rows gets pure white, without accidental margin bleed.
+    """
     w, h = pix.width, pix.height
+    x0 = max(0, int(rect.x0))
+    x1 = min(w - 1, int(rect.x1))
+    y0 = max(0, int(rect.y0))
+    y1 = min(h - 1, int(rect.y1))
     
-    # Primary candidates: left and right of the text at the vertical center of this exact line
-    primary_samples = [
-        (rect.x0 - 3, cy),
-        (rect.x1 + 3, cy),
-        (rect.x0 - 6, cy),
-        (rect.x1 + 6, cy),
-    ]
+    # Grid sampling inside the bounding box
+    step_x = 1 if (x1 - x0) < 60 else 2
+    step_y = 1
     
-    for px, py in primary_samples:
-        ix = min(w - 1, max(0, int(px)))
-        iy = min(h - 1, max(0, int(py)))
-        try:
-            rgb = pix.pixel(ix, iy)[:3]
+    light_pixels = []
+    for y in range(y0, y1 + 1, step_y):
+        for x in range(x0, x1 + 1, step_x):
+            rgb = pix.pixel(x, y)[:3]
             lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-            if lum > 190: # Medical background is light
-                if all(c > 248 for c in rgb):
-                    return (1.0, 1.0, 1.0)
-                return (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
-        except Exception:
-            pass
-            
-    # Secondary: above/below if horizontal was clipped or bordered
-    cx = (rect.x0 + rect.x1) / 2
-    for px, py in [(cx, rect.y0 - 1), (cx, rect.y1 + 1)]:
-        ix = min(w - 1, max(0, int(px)))
-        iy = min(h - 1, max(0, int(py)))
-        try:
-            rgb = pix.pixel(ix, iy)[:3]
-            lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-            if lum > 190:
-                if all(c > 248 for c in rgb):
-                    return (1.0, 1.0, 1.0)
-                return (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
-        except Exception:
-            pass
-            
-    return (1.0, 1.0, 1.0)
+            if lum > 175: # background is always light
+                light_pixels.append(rgb)
+                
+    # Also sample right-padding if available (safe from left margin bleed)
+    cy = int((rect.y0 + rect.y1) / 2)
+    if 0 <= cy < h:
+        for offset in (3, 6, 9):
+            rx = int(rect.x1 + offset)
+            if 0 <= rx < w:
+                rgb = pix.pixel(rx, cy)[:3]
+                lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+                if lum > 175:
+                    light_pixels.extend([rgb] * 5)
+                    
+    if not light_pixels:
+        return (1.0, 1.0, 1.0)
+        
+    counts = Counter(light_pixels)
+    most_common_rgb = counts.most_common(1)[0][0]
+    
+    # Snap near-white to pure white
+    if all(c > 250 for c in most_common_rgb):
+        return (1.0, 1.0, 1.0)
+        
+    return (most_common_rgb[0] / 255.0, most_common_rgb[1] / 255.0, most_common_rgb[2] / 255.0)
 
 class PDFTranslator:
     def __init__(self):
