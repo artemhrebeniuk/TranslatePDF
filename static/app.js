@@ -299,6 +299,16 @@ function handleFileUpload(e) {
 async function uploadFile(file) {
   try {
     setLoadingState(true, 'Uploading and analyzing document layers...');
+    
+    // Read file as base64 for serverless multi-worker resilience
+    const fileReader = new FileReader();
+    fileReader.onload = () => {
+      if (typeof fileReader.result === 'string') {
+        state.pdfBase64 = fileReader.result.split(',')[1] || null;
+      }
+    };
+    fileReader.readAsDataURL(file);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('source_lang', state.sourceLang);
@@ -327,6 +337,8 @@ function handleLoadedDocument(data) {
   state.transPage = 1;
   state.isTranslated = data.translated || false;
   state.segments = data.segments || [];
+  state.origPreviews = data.orig_previews || [];
+  state.transPreviews = data.trans_previews || [];
   state.customEdits = {};
 
   dom.currentFileName.textContent = `${data.filename} (${data.pages} page${data.pages > 1 ? 's' : ''})`;
@@ -363,13 +375,16 @@ async function runTranslation() {
         doc_id: state.currentDocId,
         source_lang: state.sourceLang,
         target_lang: state.targetLang,
-        mode: state.mode
+        mode: state.mode,
+        file_base64: state.pdfBase64 || null,
+        filename: state.filename || null
       })
     });
 
     const data = await response.json();
     state.isTranslated = true;
     state.segments = data.segments || [];
+    state.transPreviews = data.trans_previews || [];
     dom.btnDownload.disabled = false;
 
     renderTranslatedPreview();
@@ -388,7 +403,13 @@ function renderOriginalPreview() {
   if (!state.currentDocId) return;
   dom.origEmpty.style.display = 'none';
   dom.origImg.style.display = 'block';
-  dom.origImg.src = `/api/preview/${state.currentDocId}/orig/${state.origPage}?t=${Date.now()}`;
+  
+  const b64 = state.origPreviews && state.origPreviews[state.origPage - 1];
+  if (b64 && b64.startsWith('data:')) {
+    dom.origImg.src = b64;
+  } else {
+    dom.origImg.src = `/api/preview/${state.currentDocId}/orig/${state.origPage}?t=${Date.now()}`;
+  }
   applyRotationAndZoom();
 }
 
@@ -396,7 +417,13 @@ function renderTranslatedPreview() {
   if (!state.currentDocId || !state.isTranslated) return;
   dom.transEmpty.style.display = 'none';
   dom.transImg.style.display = 'block';
-  dom.transImg.src = `/api/preview/${state.currentDocId}/trans/${state.transPage}?t=${Date.now()}`;
+  
+  const b64 = state.transPreviews && state.transPreviews[state.transPage - 1];
+  if (b64 && b64.startsWith('data:')) {
+    dom.transImg.src = b64;
+  } else {
+    dom.transImg.src = `/api/preview/${state.currentDocId}/trans/${state.transPage}?t=${Date.now()}`;
+  }
   applyRotationAndZoom();
 }
 

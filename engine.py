@@ -3,6 +3,7 @@ import re
 import os
 import math
 import json
+import base64
 import urllib.request
 from collections import Counter
 from typing import Dict, List, Any, Tuple, Optional
@@ -693,5 +694,15 @@ class PDFTranslator:
             pix.save(fpath)
             preview_files.append(fname)
         return preview_files
+
+    def render_page_previews_b64(self, pdf_path: str, dpi: int = 125) -> List[str]:
+        doc = fitz.open(pdf_path)
+        b64_list = []
+        for page in doc:
+            pix = page.get_pixmap(dpi=dpi)
+            png_bytes = pix.tobytes("png")
+            b64_str = f"data:image/png;base64,{base64.b64encode(png_bytes).decode('ascii')}"
+            b64_list.append(b64_str)
+        return b64_list
 
 pdf_engine = PDFTranslator()
