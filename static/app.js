@@ -22,6 +22,8 @@ const state = {
   searchQuery: '',
   isTranslating: false,
   isTranslated: false,
+  pdfBase64: null,
+  translatedPdfBase64: null,
   customEdits: {}
 };
 
@@ -44,6 +46,7 @@ const dom = {
   btnTranslate: document.getElementById('btnTranslate'),
   translateBtnText: document.getElementById('translateBtnText'),
   btnDownload: document.getElementById('btnDownload'),
+  downloadBtnText: document.getElementById('downloadBtnText'),
 
   // Inspector Toolbar
   viewModeTabs: document.getElementById('viewModeTabs'),
@@ -149,11 +152,9 @@ function initEventListeners() {
   dom.btnTranslate.addEventListener('click', runTranslation);
 
   // Download Action
-  dom.btnDownload.addEventListener('click', () => {
-    if (state.currentDocId && state.isTranslated) {
-      window.location.href = `/api/download/${state.currentDocId}`;
-    }
-  });
+  if (dom.btnDownload) {
+    dom.btnDownload.addEventListener('click', handleDownloadClick);
+  }
 
   // View Mode Tabs
   dom.viewModeButtons.forEach(btn => {
@@ -339,11 +340,15 @@ function handleLoadedDocument(data) {
   state.segments = data.segments || [];
   state.origPreviews = data.orig_previews || [];
   state.transPreviews = data.trans_previews || [];
+  if (data.pdf_base64) {
+    state.translatedPdfBase64 = data.pdf_base64;
+  }
   state.customEdits = {};
 
   dom.currentFileName.textContent = `${data.filename} (${data.pages} page${data.pages > 1 ? 's' : ''})`;
   dom.btnTranslate.disabled = false;
-  dom.btnDownload.disabled = !state.isTranslated;
+  
+  updateDownloadButtonUI();
 
   updatePaginationDisplay();
   renderOriginalPreview();
@@ -353,10 +358,24 @@ function handleLoadedDocument(data) {
   } else {
     dom.transImg.style.display = 'none';
     dom.transEmpty.style.display = 'flex';
-    dom.transEmpty.innerHTML = '<span>Click "Translate Document" to generate non-destructive translation</span>';
+    dom.transEmpty.innerHTML = '<span>Click "Translate Document" or "Download PDF" to generate translation</span>';
   }
 
   filterAndRenderSegments();
+}
+
+function updateDownloadButtonUI() {
+  if (!dom.btnDownload) return;
+  dom.btnDownload.disabled = false;
+  if (state.isTranslated) {
+    dom.btnDownload.title = 'Download translated PDF document';
+    dom.btnDownload.style.opacity = '1';
+    if (dom.downloadBtnText) dom.downloadBtnText.textContent = 'Download PDF';
+  } else {
+    dom.btnDownload.title = 'Translate & Download PDF';
+    dom.btnDownload.style.opacity = '0.9';
+    if (dom.downloadBtnText) dom.downloadBtnText.textContent = 'Download PDF';
+  }
 }
 
 // Run Translation
@@ -385,12 +404,16 @@ async function runTranslation() {
     state.isTranslated = true;
     state.segments = data.segments || [];
     state.transPreviews = data.trans_previews || [];
-    dom.btnDownload.disabled = false;
+    if (data.pdf_base64) {
+      state.translatedPdfBase64 = data.pdf_base64;
+    }
+    updateDownloadButtonUI();
 
     renderTranslatedPreview();
     filterAndRenderSegments();
   } catch (err) {
     console.error('Translation failed:', err);
+    showNotification('Translation failed. Please try again.');
   } finally {
     state.isTranslating = false;
     dom.btnTranslate.disabled = false;
@@ -580,13 +603,21 @@ async function applyCustomSegmentEdits() {
 
     const data = await response.json();
     state.segments = data.segments || [];
+    if (data.trans_previews) {
+      state.transPreviews = data.trans_previews;
+    }
+    if (data.pdf_base64) {
+      state.translatedPdfBase64 = data.pdf_base64;
+    }
     renderTranslatedPreview();
     filterAndRenderSegments();
     dom.btnApplyEdits.textContent = 'Apply Edits';
+    showNotification('Custom edits applied!');
   } catch (err) {
     console.error('Failed to apply custom edits:', err);
     dom.btnApplyEdits.disabled = false;
     dom.btnApplyEdits.textContent = 'Apply Edits';
+    showNotification('Failed to apply edits');
   }
 }
 
@@ -616,4 +647,140 @@ function setLoadingState(isLoading, message = '') {
     dom.origEmpty.style.display = 'flex';
     dom.origEmpty.innerHTML = `<span>${escapeHtml(message)}</span>`;
   }
+}
+
+// Download Controller
+async function handleDownloadClick() {
+  if (!state.currentDocId) {
+    showNotification('Please select or upload a document first.');
+    return;
+  }
+
+  // If not yet translated, automatically run translation before downloading
+  if (!state.isTranslated) {
+    showNotification('Translating document before download...');
+    await runTranslation();
+    if (!state.isTranslated) {
+      showNotification('Translation failed. Please try again.');
+      return;
+    }
+  }
+
+  await executeDownload();
+}
+
+function getDownloadFilename() {
+  if (state.filename) {
+    const base = state.filename.replace(/\.pdf$/i, '');
+    const tgt = state.targetLang ? state.targetLang.toUpperCase() : 'EN';
+    return `${base}_${tgt}_Translated.pdf`;
+  }
+  return 'Translated_Document.pdf';
+}
+
+function downloadBase64Pdf(base64Data, filename) {
+  try {
+    const binaryString = atob(base64Data);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    downloadBlob(blob, filename);
+  } catch (err) {
+    console.error('Base64 decode failed, falling back to network fetch:', err);
+    fetchAndDownloadPdf();
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    if (a.parentNode) a.parentNode.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+async function fetchAndDownloadPdf() {
+  const btnText = dom.downloadBtnText;
+  const origText = btnText ? btnText.textContent : 'Download PDF';
+  if (btnText) btnText.textContent = 'Downloading...';
+
+  try {
+    const response = await fetch(`/api/download/${state.currentDocId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_base64: state.pdfBase64 || null,
+        filename: state.filename || null,
+        source_lang: state.sourceLang,
+        target_lang: state.targetLang,
+        mode: state.mode,
+        custom_translations: state.customEdits || null
+      })
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      downloadBlob(blob, getDownloadFilename());
+      showNotification('PDF downloaded successfully!');
+      return;
+    }
+
+    // Secondary GET fallback
+    const getResp = await fetch(`/api/download/${state.currentDocId}`);
+    if (getResp.ok) {
+      const blob = await getResp.blob();
+      downloadBlob(blob, getDownloadFilename());
+      showNotification('PDF downloaded successfully!');
+      return;
+    }
+
+    throw new Error('Server returned ' + response.status);
+  } catch (err) {
+    console.error('Download error:', err);
+    showNotification('Download issue detected. Using direct link fallback...');
+    const a = document.createElement('a');
+    a.href = `/api/download/${state.currentDocId}`;
+    a.download = getDownloadFilename();
+    a.target = '_blank';
+    a.click();
+  } finally {
+    if (btnText) btnText.textContent = origText;
+  }
+}
+
+async function executeDownload() {
+  // 1. If base64 is already in memory, trigger instant 0ms download
+  if (state.translatedPdfBase64) {
+    downloadBase64Pdf(state.translatedPdfBase64, getDownloadFilename());
+    showNotification('PDF downloaded successfully!');
+    return;
+  }
+
+  // 2. Fetch using multi-worker serverless POST
+  await fetchAndDownloadPdf();
+}
+
+function showNotification(message, duration = 3000) {
+  let toast = document.getElementById('appToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'appToast';
+    toast.className = 'app-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.style.display = 'flex';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
 }

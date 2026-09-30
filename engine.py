@@ -675,7 +675,7 @@ class PDFTranslator:
                         rotate=0
                     )
                     
-        doc.save(output_path, deflate=True)
+        doc.save(output_path, deflate=True, garbage=4, clean=True)
         return {
             "total_pages": len(doc),
             "total_segments": len(all_segments),
